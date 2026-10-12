@@ -1,0 +1,908 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>증산초등학교 상징 미로 탐험</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts: Noto Sans KR -->
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;600;700;900&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        jeungsan: {
+                            green: '#2d6a4f',
+                            darkgreen: '#1b4332',
+                            lightgreen: '#52b788',
+                            red: '#d90429',
+                            darkred: '#9e2a2b',
+                            gold: '#ffb703',
+                            cream: '#f8f9fa'
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Noto Sans KR', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            font-family: 'Noto Sans KR', sans-serif;
+            touch-action: manipulation;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #52b788;
+            border-radius: 4px;
+        }
+        .pulse-glow {
+            animation: pulseGlow 2s infinite ease-in-out;
+        }
+        @keyframes pulseGlow {
+            0%, 100% { box-shadow: 0 0 15px rgba(255, 183, 3, 0.6); }
+            50% { box-shadow: 0 0 30px rgba(255, 183, 3, 0.9); }
+        }
+        canvas {
+            touch-action: none;
+        }
+    </style>
+</head>
+<body class="bg-slate-900 text-slate-800 min-h-screen flex flex-col items-center justify-between p-2 sm:p-4">
+
+    <!-- Header Section -->
+    <header class="w-full max-w-4xl bg-slate-800/90 border border-slate-700 backdrop-blur rounded-2xl p-3 sm:p-4 mb-3 text-white shadow-xl flex flex-col md:flex-row items-center justify-between gap-3">
+        <div class="flex items-center gap-3">
+            <!-- School Emblem Icon Badge -->
+            <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-jeungsan-red to-jeungsan-green flex items-center justify-center shadow-lg border-2 border-yellow-300 font-black text-white text-xl">
+                증산
+            </div>
+            <div>
+                <h1 class="text-xl sm:text-2xl font-black text-amber-300 tracking-wide flex items-center gap-2">
+                    증산초등학교 미로 탐험
+                </h1>
+                <p class="text-xs text-slate-300 flex items-center gap-3 mt-0.5">
+                    <span>🌲 교목: <b>소나무</b></span>
+                    <span>🌺 교화: <b>동백꽃</b></span>
+                    <span>🎓 <b>학교 마크</b></span>
+                </p>
+            </div>
+        </div>
+
+        <!-- Control Buttons -->
+        <div class="flex items-center gap-2 flex-wrap justify-center">
+            <button id="infoBtn" class="bg-slate-700 hover:bg-slate-600 text-slate-200 text-xs px-3 py-2 rounded-xl border border-slate-600 flex items-center gap-1.5 transition">
+                <i class="fa-solid fa-circle-info text-emerald-400"></i> 학교상징 소개
+            </button>
+            <button id="audioBtn" class="bg-slate-700 hover:bg-slate-600 text-slate-200 text-xs px-3 py-2 rounded-xl border border-slate-600 flex items-center gap-1.5 transition">
+                <i id="audioIcon" class="fa-solid fa-volume-high text-yellow-400"></i> 효과음
+            </button>
+            <button id="fogBtn" class="bg-slate-700 hover:bg-slate-600 text-slate-200 text-xs px-3 py-2 rounded-xl border border-slate-600 flex items-center gap-1.5 transition">
+                <i class="fa-solid fa-eye-slash text-purple-400"></i> 안개 모드
+            </button>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="w-full max-w-4xl flex flex-col gap-3 items-center">
+        <!-- Dashboard & Status -->
+        <div class="w-full bg-slate-800/80 border border-slate-700 rounded-2xl p-3 text-white flex flex-wrap items-center justify-between gap-2 shadow-md">
+            <!-- Difficulty Selector -->
+            <div class="flex items-center gap-2">
+                <label for="difficultySelect" class="text-xs font-semibold text-slate-300"><i class="fa-solid fa-layer-group text-slate-400"></i> 난이도:</label>
+                <select id="difficultySelect" class="bg-slate-900 text-emerald-400 border border-slate-700 rounded-lg px-2 py-1 text-xs font-bold focus:outline-none focus:border-emerald-500">
+                    <option value="11">쉬움 (11x11)</option>
+                    <option value="15" selected>보통 (15x15)</option>
+                    <option value="21">어려움 (21x21)</option>
+                    <option value="27">마스터 (27x27)</option>
+                </select>
+                <button id="restartBtn" class="bg-emerald-600 hover:bg-emerald-500 active:scale-95 text-white font-bold text-xs px-3 py-1.5 rounded-lg transition shadow flex items-center gap-1">
+                    <i class="fa-solid fa-rotate-right"></i> 새 미로
+                </button>
+            </div>
+
+            <!-- Stats -->
+            <div class="flex items-center gap-4 text-xs font-medium">
+                <div class="flex items-center gap-1 bg-slate-900/60 px-2.5 py-1 rounded-lg border border-slate-700">
+                    <i class="fa-regular fa-clock text-amber-400"></i>
+                    <span>시간: <strong id="timerText" class="text-amber-300 font-mono">00:00</strong></span>
+                </div>
+                <div class="flex items-center gap-1 bg-slate-900/60 px-2.5 py-1 rounded-lg border border-slate-700">
+                    <span class="text-red-400">🌺</span>
+                    <span>동백꽃: <strong id="flowerText" class="text-pink-300">0 / 0</strong></span>
+                </div>
+                <div class="flex items-center gap-1 bg-slate-900/60 px-2.5 py-1 rounded-lg border border-slate-700">
+                    <i class="fa-solid fa-shoe-prints text-cyan-400"></i>
+                    <span>걸음: <strong id="stepText" class="text-cyan-300 font-mono">0</strong></span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Canvas Container -->
+        <div class="relative w-full flex justify-center items-center bg-slate-950 p-2 sm:p-4 rounded-2xl border border-slate-800 shadow-2xl overflow-hidden">
+            <canvas id="mazeCanvas" class="rounded-xl shadow-lg border border-emerald-900/50 bg-slate-900 max-w-full h-auto cursor-pointer"></canvas>
+
+            <!-- On-Screen Instructions Overlay when game starts -->
+            <div id="startOverlay" class="absolute inset-0 bg-slate-950/80 backdrop-blur-sm flex flex-col items-center justify-center p-6 text-center text-white z-20 transition-opacity duration-300">
+                <div class="w-16 h-16 bg-gradient-to-tr from-emerald-600 to-red-500 rounded-2xl flex items-center justify-center text-3xl shadow-xl mb-3 animate-bounce">
+                    🌲
+                </div>
+                <h2 class="text-2xl font-black text-amber-300 mb-2">증산초등학교 미로 탐험</h2>
+                <p class="text-sm text-slate-300 max-w-md mb-4 leading-relaxed">
+                    소나무(🌲) 미로 속에서 동백꽃(🌺)을 모두 수집하고, 중앙에 위치한 <b class="text-amber-400">증산초등학교 교표(🎓)</b>에 도착해보세요!
+                </p>
+                <button id="startGameBtn" class="bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-white font-black px-8 py-3 rounded-xl shadow-lg hover:shadow-emerald-500/20 active:scale-95 transition transform text-base">
+                    탐험 시작하기!
+                </button>
+            </div>
+        </div>
+
+        <!-- Mobile Touch Controller (On-Screen D-Pad) -->
+        <div class="w-full bg-slate-800/80 border border-slate-700 rounded-2xl p-3 flex flex-wrap items-center justify-around gap-4 text-white">
+            <div class="text-xs text-slate-400 flex flex-col gap-1 max-w-xs">
+                <span class="font-bold text-slate-200"><i class="fa-solid fa-gamepad text-emerald-400"></i> 조작 방법:</span>
+                <span>• 키보드: 방향키(↑ ↓ ← →) 또는 W, A, S, D</span>
+                <span>• 모바일: 터치 화면 드래그/스위프 또는 아래 방향키</span>
+            </div>
+
+            <!-- Virtual D-Pad -->
+            <div class="grid grid-cols-3 gap-1.5 w-36 h-36">
+                <div></div>
+                <button id="btnUp" class="bg-slate-700 hover:bg-emerald-600 active:bg-emerald-500 rounded-xl flex items-center justify-center text-xl text-white shadow active:scale-95 transition">
+                    <i class="fa-solid fa-caret-up"></i>
+                </button>
+                <div></div>
+                <button id="btnLeft" class="bg-slate-700 hover:bg-emerald-600 active:bg-emerald-500 rounded-xl flex items-center justify-center text-xl text-white shadow active:scale-95 transition">
+                    <i class="fa-solid fa-caret-left"></i>
+                </button>
+                <div class="flex items-center justify-center text-xs text-slate-500 font-bold">MOVE</div>
+                <button id="btnRight" class="bg-slate-700 hover:bg-emerald-600 active:bg-emerald-500 rounded-xl flex items-center justify-center text-xl text-white shadow active:scale-95 transition">
+                    <i class="fa-solid fa-caret-right"></i>
+                </button>
+                <div></div>
+                <button id="btnDown" class="bg-slate-700 hover:bg-emerald-600 active:bg-emerald-500 rounded-xl flex items-center justify-center text-xl text-white shadow active:scale-95 transition">
+                    <i class="fa-solid fa-caret-down"></i>
+                </button>
+                <div></div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="w-full max-w-4xl text-center text-xs text-slate-500 my-4">
+        증산초등학교 상징(교목: 소나무, 교화: 동백꽃, 교표) 미로 탐험 게임 • Jeungsan Elementary School Maze Game
+    </footer>
+
+    <!-- Victory Modal -->
+    <div id="victoryModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-md hidden z-50 flex items-center justify-center p-4">
+        <div class="bg-slate-800 border-2 border-amber-400/80 rounded-3xl p-6 sm:p-8 max-w-md w-full text-center text-white shadow-2xl relative transform transition-all scale-95 animate-fade-in">
+            <!-- Glowing Trophy/Badge Icon -->
+            <div class="w-20 h-20 mx-auto bg-gradient-to-tr from-amber-500 to-yellow-300 rounded-full flex items-center justify-center text-4xl shadow-xl pulse-glow mb-4">
+                🎓
+            </div>
+            <h3 class="text-2xl font-black text-amber-300 mb-1">미로 탐험 성공!</h3>
+            <p class="text-xs text-slate-300 mb-6">증산초등학교의 상징들을 찾아 모든 미션을 완수했습니다!</p>
+
+            <!-- Stats Summary -->
+            <div class="bg-slate-900/90 rounded-2xl p-4 border border-slate-700 flex flex-col gap-2.5 mb-6 text-sm">
+                <div class="flex justify-between items-center border-b border-slate-800 pb-2">
+                    <span class="text-slate-400"><i class="fa-regular fa-clock text-amber-400"></i> 소요 시간</span>
+                    <strong id="finalTime" class="text-amber-300 font-mono text-base">00:00</strong>
+                </div>
+                <div class="flex justify-between items-center border-b border-slate-800 pb-2">
+                    <span class="text-slate-400">🌺 수집한 동백꽃</span>
+                    <strong id="finalFlowers" class="text-pink-400 font-mono text-base">0 / 0</strong>
+                </div>
+                <div class="flex justify-between items-center border-b border-slate-800 pb-2">
+                    <span class="text-slate-400"><i class="fa-solid fa-shoe-prints text-cyan-400"></i> 총 걸음 수</span>
+                    <strong id="finalSteps" class="text-cyan-300 font-mono text-base">0</strong>
+                </div>
+                <div class="flex justify-between items-center">
+                    <span class="text-slate-400"><i class="fa-solid fa-star text-yellow-400"></i> 최종 점수</span>
+                    <strong id="finalScore" class="text-yellow-400 font-black text-lg">1,000점</strong>
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="flex gap-3">
+                <button id="modalInfoBtn" class="flex-1 bg-slate-700 hover:bg-slate-600 text-slate-200 font-bold py-3 rounded-xl transition text-sm flex items-center justify-center gap-1.5">
+                    <i class="fa-solid fa-book-open"></i> 학교상징 보기
+                </button>
+                <button id="playAgainBtn" class="flex-1 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-white font-black py-3 rounded-xl shadow-lg transition text-sm flex items-center justify-center gap-1.5">
+                    <i class="fa-solid fa-rotate-right"></i> 다시 하기
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- School Symbol Info Modal -->
+    <div id="infoModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-md hidden z-50 flex items-center justify-center p-4">
+        <div class="bg-slate-800 border border-slate-700 rounded-3xl p-6 max-w-lg w-full text-white shadow-2xl relative max-h-[90vh] overflow-y-auto">
+            <button id="closeInfoBtn" class="absolute top-4 right-4 text-slate-400 hover:text-white text-xl">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+            
+            <div class="flex items-center gap-3 mb-5 border-b border-slate-700 pb-3">
+                <div class="w-10 h-10 rounded-xl bg-emerald-600 flex items-center justify-center text-xl font-black text-white">
+                    증산
+                </div>
+                <div>
+                    <h3 class="text-lg font-black text-amber-300">증산초등학교 상징 이야기</h3>
+                    <p class="text-xs text-slate-400">Jeungsan Elementary School Symbols</p>
+                </div>
+            </div>
+
+            <div class="space-y-4 text-sm">
+                <!-- Tree Section -->
+                <div class="bg-slate-900/80 p-4 rounded-2xl border border-emerald-800/40 flex items-start gap-3">
+                    <div class="text-3xl p-2 bg-emerald-950/80 rounded-xl border border-emerald-700">🌲</div>
+                    <div>
+                        <h4 class="font-bold text-emerald-400 text-base flex items-center gap-2">
+                            교목: 소나무
+                        </h4>
+                        <p class="text-slate-300 text-xs mt-1 leading-relaxed">
+                            사계절 내내 푸르고 곧게 자라는 <b>소나무</b>는 굳건한 의지와 불굴의 기상을 상징합니다. 증산초등학교 어린이들이 어려움을 극복하고 씩씩하게 자라나기를 바라는 마음을 담고 있습니다.
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Flower Section -->
+                <div class="bg-slate-900/80 p-4 rounded-2xl border border-red-900/40 flex items-start gap-3">
+                    <div class="text-3xl p-2 bg-red-950/80 rounded-xl border border-red-700">🌺</div>
+                    <div>
+                        <h4 class="font-bold text-red-400 text-base flex items-center gap-2">
+                            교화: 동백꽃
+                        </h4>
+                        <p class="text-slate-300 text-xs mt-1 leading-relaxed">
+                            추운 겨울에도 정열적이고 아름답게 피어나는 <b>동백꽃</b>은 굳센 의지와 청렴함, 그리고 서로를 아끼는 사랑스러운 마음을 상징합니다.
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Crest Section -->
+                <div class="bg-slate-900/80 p-4 rounded-2xl border border-amber-800/40 flex items-start gap-3">
+                    <div class="text-3xl p-2 bg-amber-950/80 rounded-xl border border-amber-700">🎓</div>
+                    <div>
+                        <h4 class="font-bold text-amber-300 text-base flex items-center gap-2">
+                            교표 (학교 마크)
+                        </h4>
+                        <p class="text-slate-300 text-xs mt-1 leading-relaxed">
+                            증산초등학교의 정신과 한마음 한뜻의 단결을 상징하는 대표 마크입니다. 슬기롭고 건강하게 미래를 향해 꿈을 펼치는 증산 어린의 모습을 담고 있습니다.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-6 text-center">
+                <button id="confirmInfoBtn" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-2.5 rounded-xl transition text-sm">
+                    확인했습니다
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        /**
+         * 증산초등학교 상징 미로 탐험 (Jeungsan Elementary School Maze)
+         * Web Canvas & Audio powered
+         */
+        
+        // Audio Synthesizer Class using Web Audio API
+        class SoundFX {
+            constructor() {
+                this.ctx = null;
+                this.enabled = true;
+            }
+
+            init() {
+                if (!this.ctx) {
+                    const AudioContext = window.AudioContext || window.webkitAudioContext;
+                    if (AudioContext) {
+                        this.ctx = new AudioContext();
+                    }
+                }
+            }
+
+            playStep() {
+                if (!this.enabled || !this.ctx) return;
+                try {
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(150 + Math.random() * 50, this.ctx.currentTime);
+                    gain.gain.setValueAtTime(0.05, this.ctx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 0.08);
+                    osc.connect(gain);
+                    gain.connect(this.ctx.destination);
+                    osc.start();
+                    osc.stop(this.ctx.currentTime + 0.08);
+                } catch(e){}
+            }
+
+            playCollect() {
+                if (!this.enabled || !this.ctx) return;
+                try {
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(523.25, this.ctx.currentTime); // C5
+                    osc.frequency.exponentialRampToValueAtTime(880, this.ctx.currentTime + 0.15); // A5
+                    gain.gain.setValueAtTime(0.15, this.ctx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 0.2);
+                    osc.connect(gain);
+                    gain.connect(this.ctx.destination);
+                    osc.start();
+                    osc.stop(this.ctx.currentTime + 0.2);
+                } catch(e){}
+            }
+
+            playSpeedUp() {
+                if (!this.enabled || !this.ctx) return;
+                try {
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+                    osc.type = 'sawtooth';
+                    osc.frequency.setValueAtTime(300, this.ctx.currentTime);
+                    osc.frequency.linearRampToValueAtTime(600, this.ctx.currentTime + 0.25);
+                    gain.gain.setValueAtTime(0.1, this.ctx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 0.25);
+                    osc.connect(gain);
+                    gain.connect(this.ctx.destination);
+                    osc.start();
+                    osc.stop(this.ctx.currentTime + 0.25);
+                } catch(e){}
+            }
+
+            playVictory() {
+                if (!this.enabled || !this.ctx) return;
+                try {
+                    const notes = [523.25, 659.25, 783.99, 1046.50]; // C5, E5, G5, C6
+                    notes.forEach((freq, idx) => {
+                        const osc = this.ctx.createOscillator();
+                        const gain = this.ctx.createGain();
+                        osc.type = 'sine';
+                        osc.frequency.setValueAtTime(freq, this.ctx.currentTime + idx * 0.12);
+                        gain.gain.setValueAtTime(0.15, this.ctx.currentTime + idx * 0.12);
+                        gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + idx * 0.12 + 0.3);
+                        osc.connect(gain);
+                        gain.connect(this.ctx.destination);
+                        osc.start(this.ctx.currentTime + idx * 0.12);
+                        osc.stop(this.ctx.currentTime + idx * 0.12 + 0.3);
+                    });
+                } catch(e){}
+            }
+        }
+
+        const sound = new SoundFX();
+
+        // Game Constants & State Variables
+        const canvas = document.getElementById('mazeCanvas');
+        const ctx = canvas.getContext('2d');
+
+        let gridDim = 15; // Grid dimension (odd number)
+        let grid = []; // 0: path, 1: wall
+        let items = {}; // key: "x,y", val: { type: 'flower'|'pinecone' }
+        let visitedFog = []; // Fog of War state
+        
+        let player = { x: 1, y: 1, speedBoost: 0 };
+        let goal = { x: 13, y: 13 };
+
+        let timerInterval = null;
+        let secondsElapsed = 0;
+        let stepCount = 0;
+        let totalFlowers = 0;
+        let collectedFlowers = 0;
+        let isGameActive = false;
+        let fogOfWarMode = false;
+
+        // UI Element References
+        const timerText = document.getElementById('timerText');
+        const flowerText = document.getElementById('flowerText');
+        const stepText = document.getElementById('stepText');
+        const difficultySelect = document.getElementById('difficultySelect');
+        const restartBtn = document.getElementById('restartBtn');
+        const startOverlay = document.getElementById('startOverlay');
+        const startGameBtn = document.getElementById('startGameBtn');
+        const victoryModal = document.getElementById('victoryModal');
+        const infoModal = document.getElementById('infoModal');
+        const audioBtn = document.getElementById('audioBtn');
+        const audioIcon = document.getElementById('audioIcon');
+        const fogBtn = document.getElementById('fogBtn');
+
+        /**
+         * Maze Generation using Depth-First Search Algorithm
+         * Ensures a valid, solvable maze from start to finish
+         */
+        function generateMaze(dim) {
+            gridDim = dim;
+            grid = Array.from({ length: dim }, () => Array(dim).fill(1));
+
+            function carve(cx, cy) {
+                grid[cy][cx] = 0;
+                const directions = [
+                    [0, -2], [0, 2], [-2, 0], [2, 0]
+                ].sort(() => Math.random() - 0.5);
+
+                for (let [dx, dy] of directions) {
+                    const nx = cx + dx;
+                    const ny = cy + dy;
+                    if (nx > 0 && nx < dim - 1 && ny > 0 && ny < dim - 1 && grid[ny][nx] === 1) {
+                        grid[cy + dy / 2][cx + dx / 2] = 0;
+                        carve(nx, ny);
+                    }
+                }
+            }
+
+            carve(1, 1);
+
+            // Set Start & Goal
+            player.x = 1;
+            player.y = 1;
+            goal.x = dim - 2;
+            goal.y = dim - 2;
+
+            // Ensure goal is open
+            grid[goal.y][goal.x] = 0;
+
+            // Initialize Fog Matrix
+            visitedFog = Array.from({ length: dim }, () => Array(dim).fill(false));
+
+            // Populate Collectibles (Camellia Flowers 🌺 and Pinecones 🌲)
+            items = {};
+            collectedFlowers = 0;
+            totalFlowers = Math.floor(dim * 0.8);
+
+            let emptyCells = [];
+            for (let r = 1; r < dim - 1; r++) {
+                for (let c = 1; c < dim - 1; c++) {
+                    if (grid[r][c] === 0 && !(r === 1 && c === 1) && !(r === goal.y && c === goal.x)) {
+                        emptyCells.push({ x: c, y: r });
+                    }
+                }
+            }
+            emptyCells.sort(() => Math.random() - 0.5);
+
+            // Place Camellia Flowers
+            for (let i = 0; i < totalFlowers && i < emptyCells.length; i++) {
+                const cell = emptyCells[i];
+                items[`${cell.x},${cell.y}`] = { type: 'flower' };
+            }
+
+            // Place Pinecones (Speed items)
+            const pineconeCount = Math.floor(dim / 5);
+            for (let i = totalFlowers; i < totalFlowers + pineconeCount && i < emptyCells.length; i++) {
+                const cell = emptyCells[i];
+                items[`${cell.x},${cell.y}`] = { type: 'pinecone' };
+            }
+
+            updateStatsDisplay();
+            resizeCanvas();
+            revealFog(player.x, player.y);
+        }
+
+        function revealFog(px, py) {
+            const radius = 2;
+            for (let dy = -radius; dy <= radius; dy++) {
+                for (let dx = -radius; dx <= radius; dx++) {
+                    const nx = px + dx;
+                    const ny = py + dy;
+                    if (nx >= 0 && nx < gridDim && ny >= 0 && ny < gridDim) {
+                        visitedFog[ny][nx] = true;
+                    }
+                }
+            }
+        }
+
+        /**
+         * Canvas Rendering Engine
+         */
+        function resizeCanvas() {
+            const maxCanvasSize = Math.min(window.innerWidth - 32, 600);
+            const cellSize = Math.floor(maxCanvasSize / gridDim);
+            canvas.width = cellSize * gridDim;
+            canvas.height = cellSize * gridDim;
+            render();
+        }
+
+        function render() {
+            if (!ctx) return;
+            const cellSize = canvas.width / gridDim;
+
+            // Clear Background
+            ctx.fillStyle = '#0f172a';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            for (let r = 0; r < gridDim; r++) {
+                for (let c = 0; c < gridDim; c++) {
+                    const x = c * cellSize;
+                    const y = r * cellSize;
+
+                    // Fog of War rendering check
+                    if (fogOfWarMode && !visitedFog[r][c]) {
+                        ctx.fillStyle = '#020617';
+                        ctx.fillRect(x, y, cellSize, cellSize);
+                        continue;
+                    }
+
+                    if (grid[r][c] === 1) {
+                        // Draw Wall as Pine Tree Hedge (소나무 벽)
+                        drawPineWall(x, y, cellSize);
+                    } else {
+                        // Draw Path
+                        ctx.fillStyle = '#1e293b';
+                        ctx.fillRect(x, y, cellSize, cellSize);
+
+                        // Subtle grid line
+                        ctx.strokeStyle = 'rgba(255, 255, 255, 0.03)';
+                        ctx.strokeRect(x, y, cellSize, cellSize);
+                    }
+
+                    // Draw Items if present
+                    const itemKey = `${c},${r}`;
+                    if (items[itemKey]) {
+                        if (items[itemKey].type === 'flower') {
+                            drawCamelliaFlower(x + cellSize / 2, y + cellSize / 2, cellSize * 0.35);
+                        } else if (items[itemKey].type === 'pinecone') {
+                            drawPinecone(x + cellSize / 2, y + cellSize / 2, cellSize * 0.3);
+                        }
+                    }
+                }
+            }
+
+            // Draw Goal (School Emblem / 교표 마크)
+            const goalX = goal.x * cellSize + cellSize / 2;
+            const goalY = goal.y * cellSize + cellSize / 2;
+            drawSchoolCrest(goalX, goalY, cellSize * 0.42);
+
+            // Draw Player Character
+            const playerX = player.x * cellSize + cellSize / 2;
+            const playerY = player.y * cellSize + cellSize / 2;
+            drawPlayer(playerX, playerY, cellSize * 0.38);
+        }
+
+        // Pine Tree Wall Graphic
+        function drawPineWall(x, y, size) {
+            // Dark Green Base
+            ctx.fillStyle = '#1b4332';
+            ctx.fillRect(x, y, size, size);
+
+            // Pine Needle Canopy layer
+            ctx.fillStyle = '#2d6a4f';
+            ctx.beginPath();
+            ctx.arc(x + size * 0.5, y + size * 0.5, size * 0.45, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Lighter Leaf Accents
+            ctx.fillStyle = '#40916c';
+            ctx.beginPath();
+            ctx.arc(x + size * 0.35, y + size * 0.35, size * 0.2, 0, Math.PI * 2);
+            ctx.arc(x + size * 0.65, y + size * 0.4, size * 0.18, 0, Math.PI * 2);
+            ctx.fill();
+        }
+
+        // Camellia Flower Graphic (동백꽃)
+        function drawCamelliaFlower(cx, cy, radius) {
+            ctx.save();
+            ctx.translate(cx, cy);
+
+            // Red Petals
+            ctx.fillStyle = '#d90429';
+            const petals = 5;
+            for (let i = 0; i < petals; i++) {
+                ctx.beginPath();
+                const angle = (i * 2 * Math.PI) / petals;
+                const px = Math.cos(angle) * (radius * 0.5);
+                const py = Math.sin(angle) * (radius * 0.5);
+                ctx.arc(px, py, radius * 0.55, 0, Math.PI * 2);
+                ctx.fill();
+            }
+
+            // Yellow Flower Center
+            ctx.fillStyle = '#ffb703';
+            ctx.beginPath();
+            ctx.arc(0, 0, radius * 0.35, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.restore();
+        }
+
+        // Pinecone Speed Boost Graphic
+        function drawPinecone(cx, cy, radius) {
+            ctx.save();
+            ctx.translate(cx, cy);
+            ctx.fillStyle = '#b08968';
+            ctx.beginPath();
+            ctx.ellipse(0, 0, radius * 0.7, radius, 0, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.fillStyle = '#7f5539';
+            ctx.beginPath();
+            ctx.arc(0, 0, radius * 0.4, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.restore();
+        }
+
+        // School Crest Emblem Graphic (증산초등학교 교표 마크)
+        function drawSchoolCrest(cx, cy, radius) {
+            ctx.save();
+            ctx.translate(cx, cy);
+
+            // Outer Pulsing Gold Shield
+            ctx.fillStyle = '#ffb703';
+            ctx.beginPath();
+            ctx.arc(0, 0, radius * 1.15, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Inner Red Circle
+            ctx.fillStyle = '#9e2a2b';
+            ctx.beginPath();
+            ctx.arc(0, 0, radius * 0.95, 0, Math.PI * 2);
+            ctx.fill();
+
+            // School Text/Emblem Label
+            ctx.fillStyle = '#ffffff';
+            ctx.font = `900 ${Math.max(10, Math.floor(radius * 0.8))}px 'Noto Sans KR', sans-serif`;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('증산', 0, 1);
+
+            ctx.restore();
+        }
+
+        // Cute Student Avatar Graphic
+        function drawPlayer(cx, cy, radius) {
+            ctx.save();
+            ctx.translate(cx, cy);
+
+            // Shadow
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
+            ctx.beginPath();
+            ctx.ellipse(0, radius * 0.7, radius * 0.7, radius * 0.3, 0, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Body/Shirt (Emerald Green)
+            ctx.fillStyle = player.speedBoost > 0 ? '#06b6d4' : '#10b981';
+            ctx.beginPath();
+            ctx.arc(0, radius * 0.3, radius * 0.65, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Head / Face
+            ctx.fillStyle = '#fde047';
+            ctx.beginPath();
+            ctx.arc(0, -radius * 0.2, radius * 0.55, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Eyes
+            ctx.fillStyle = '#1e293b';
+            ctx.beginPath();
+            ctx.arc(-radius * 0.2, -radius * 0.25, radius * 0.1, 0, Math.PI * 2);
+            ctx.arc(radius * 0.2, -radius * 0.25, radius * 0.1, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Yellow School Cap
+            ctx.fillStyle = '#eab308';
+            ctx.beginPath();
+            ctx.arc(0, -radius * 0.45, radius * 0.5, Math.PI, 0);
+            ctx.fill();
+
+            ctx.restore();
+        }
+
+        /**
+         * Movement & Game Logic
+         */
+        function movePlayer(dx, dy) {
+            if (!isGameActive) return;
+
+            const newX = player.x + dx;
+            const newY = player.y + dy;
+
+            // Check Wall Collision
+            if (newX >= 0 && newX < gridDim && newY >= 0 && newY < gridDim && grid[newY][newX] === 0) {
+                player.x = newX;
+                player.y = newY;
+                stepCount++;
+
+                if (fogOfWarMode) {
+                    revealFog(player.x, player.y);
+                }
+
+                sound.playStep();
+
+                // Check Items
+                const itemKey = `${player.x},${player.y}`;
+                if (items[itemKey]) {
+                    if (items[itemKey].type === 'flower') {
+                        collectedFlowers++;
+                        sound.playCollect();
+                    } else if (items[itemKey].type === 'pinecone') {
+                        player.speedBoost = 15;
+                        sound.playSpeedUp();
+                    }
+                    delete items[itemKey];
+                }
+
+                updateStatsDisplay();
+
+                // Check Goal Reached
+                if (player.x === goal.x && player.y === goal.y) {
+                    winGame();
+                }
+
+                render();
+            }
+        }
+
+        function updateStatsDisplay() {
+            stepText.textContent = stepCount;
+            flowerText.textContent = `${collectedFlowers} / ${totalFlowers}`;
+        }
+
+        function startTimer() {
+            clearInterval(timerInterval);
+            secondsElapsed = 0;
+            timerText.textContent = '00:00';
+            timerInterval = setInterval(() => {
+                if (isGameActive) {
+                    secondsElapsed++;
+                    const m = String(Math.floor(secondsElapsed / 60)).padStart(2, '0');
+                    const s = String(secondsElapsed % 60).padStart(2, '0');
+                    timerText.textContent = `${m}:${s}`;
+                }
+            }, 1000);
+        }
+
+        function winGame() {
+            isGameActive = false;
+            clearInterval(timerInterval);
+            sound.playVictory();
+
+            // Calculate Score
+            const m = String(Math.floor(secondsElapsed / 60)).padStart(2, '0');
+            const s = String(secondsElapsed % 60).padStart(2, '0');
+            const timeFormatted = `${m}:${s}`;
+
+            const baseScore = 1000;
+            const flowerBonus = collectedFlowers * 150;
+            const timePenalty = secondsElapsed * 3;
+            const stepPenalty = stepCount * 2;
+            const finalCalculatedScore = Math.max(100, baseScore + flowerBonus - timePenalty - stepPenalty);
+
+            document.getElementById('finalTime').textContent = timeFormatted;
+            document.getElementById('finalFlowers').textContent = `${collectedFlowers} / ${totalFlowers}`;
+            document.getElementById('finalSteps').textContent = stepCount;
+            document.getElementById('finalScore').textContent = `${finalCalculatedScore.toLocaleString()}점`;
+
+            victoryModal.classList.remove('hidden');
+        }
+
+        function initNewGame() {
+            sound.init();
+            const dim = parseInt(difficultySelect.value);
+            stepCount = 0;
+            generateMaze(dim);
+            startTimer();
+            isGameActive = true;
+            victoryModal.classList.add('hidden');
+            startOverlay.classList.add('hidden');
+        }
+
+        // Event Listeners
+        window.addEventListener('resize', resizeCanvas);
+
+        // Keyboard Navigation
+        window.addEventListener('keydown', (e) => {
+            if (!isGameActive) return;
+            switch (e.key) {
+                case 'ArrowUp':
+                case 'w':
+                case 'W':
+                    e.preventDefault();
+                    movePlayer(0, -1);
+                    break;
+                case 'ArrowDown':
+                case 's':
+                case 'S':
+                    e.preventDefault();
+                    movePlayer(0, 1);
+                    break;
+                case 'ArrowLeft':
+                case 'a':
+                case 'A':
+                    e.preventDefault();
+                    movePlayer(-1, 0);
+                    break;
+                case 'ArrowRight':
+                case 'd':
+                case 'D':
+                    e.preventDefault();
+                    movePlayer(1, 0);
+                    break;
+            }
+        });
+
+        // On-Screen D-Pad Controls
+        document.getElementById('btnUp').addEventListener('click', () => movePlayer(0, -1));
+        document.getElementById('btnDown').addEventListener('click', () => movePlayer(0, 1));
+        document.getElementById('btnLeft').addEventListener('click', () => movePlayer(-1, 0));
+        document.getElementById('btnRight').addEventListener('click', () => movePlayer(1, 0));
+
+        // Swipe Controls on Canvas for Touch Devices
+        let touchStartX = 0;
+        let touchStartY = 0;
+
+        canvas.addEventListener('touchstart', (e) => {
+            if (e.touches.length > 0) {
+                touchStartX = e.touches[0].clientX;
+                touchStartY = e.touches[0].clientY;
+            }
+        }, { passive: true });
+
+        canvas.addEventListener('touchend', (e) => {
+            if (!isGameActive || e.changedTouches.length === 0) return;
+            const dx = e.changedTouches[0].clientX - touchStartX;
+            const dy = e.changedTouches[0].clientY - touchStartY;
+            const minSwipeDistance = 20;
+
+            if (Math.abs(dx) > Math.abs(dy)) {
+                if (Math.abs(dx) > minSwipeDistance) {
+                    movePlayer(dx > 0 ? 1 : -1, 0);
+                }
+            } else {
+                if (Math.abs(dy) > minSwipeDistance) {
+                    movePlayer(0, dy > 0 ? 1 : -1);
+                }
+            }
+        }, { passive: true });
+
+        // Header and Modal Control Handlers
+        startGameBtn.addEventListener('click', initNewGame);
+        restartBtn.addEventListener('click', initNewGame);
+        document.getElementById('playAgainBtn').addEventListener('click', initNewGame);
+
+        difficultySelect.addEventListener('change', initNewGame);
+
+        audioBtn.addEventListener('click', () => {
+            sound.enabled = !sound.enabled;
+            audioIcon.className = sound.enabled ? "fa-solid fa-volume-high text-yellow-400" : "fa-solid fa-volume-xmark text-slate-400";
+        });
+
+        fogBtn.addEventListener('click', () => {
+            fogOfWarMode = !fogOfWarMode;
+            fogBtn.classList.toggle('bg-purple-900/60');
+            render();
+        });
+
+        // Info Modal Handlers
+        const showInfo = () => infoModal.classList.remove('hidden');
+        const hideInfo = () => infoModal.classList.add('hidden');
+
+        document.getElementById('infoBtn').addEventListener('click', showInfo);
+        document.getElementById('modalInfoBtn').addEventListener('click', () => {
+            victoryModal.classList.add('hidden');
+            showInfo();
+        });
+        document.getElementById('closeInfoBtn').addEventListener('click', hideInfo);
+        document.getElementById('confirmInfoBtn').addEventListener('click', hideInfo);
+
+        // Initial Setup on Load
+        window.onload = () => {
+            generateMaze(parseInt(difficultySelect.value));
+            render();
+        };
+    </script>
+</body>
+</html>
